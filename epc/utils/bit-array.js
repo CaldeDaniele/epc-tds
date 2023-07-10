@@ -72,7 +72,7 @@ class BitArray {
   }
 
   set(value, startIndex, endIndex) {
-    let v = BigInt(value);
+    let v = parseInt(value);
     for (let i = 0; startIndex < endIndex; i++) {
       endIndex--;
       if ((v >> i) & 0b1) {
