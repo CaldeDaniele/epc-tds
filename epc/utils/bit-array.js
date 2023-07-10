@@ -1,17 +1,36 @@
 /*
-* EPC Tag Data Standard
-* 2021 Sergio S. - https://github.com/sergiss/epc-tds
-*/
+ * EPC Tag Data Standard
+ * 2021 Sergio S. - https://github.com/sergiss/epc-tds
+ */
 
 class BitArray {
+  static REVERSE_HEX_CHARS = [
+    "0",
+    "8",
+    "4",
+    "C",
+    "2",
+    "A",
+    "6",
+    "E",
+    "1",
+    "9",
+    "5",
+    "D",
+    "3",
+    "B",
+    "7",
+    "F",
+  ];
 
-  static REVERSE_HEX_CHARS = ['0','8','4','C','2','A','6','E','1','9','5' ,'D' ,'3' ,'B' ,'7' ,'F'];
-
-  static REVERSE_DEC_TABLE = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
-                              -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
-                              -1,-1,-1,-1,-1,-1,-1,-1, 0,8,4,12,2,10,6,14,1,9,-1,-1,-1,-1,
-                              -1,-1,-1,5,13,3,11,7,15,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
-                              -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,5,13,3,11,7,15,-1];
+  static REVERSE_DEC_TABLE = [
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 8, 4, 12, 2, 10, 6, 14, 1, 9, -1,
+    -1, -1, -1, -1, -1, -1, 5, 13, 3, 11, 7, 15, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 5,
+    13, 3, 11, 7, 15, -1,
+  ];
 
   constructor(length) {
     this.length = (length + 7) >> 3;
@@ -54,9 +73,10 @@ class BitArray {
 
   set(value, startIndex, endIndex) {
     let v = BigInt(value);
-    for (let i = 0n; startIndex < endIndex; i++) {
+    for (let i = 0; startIndex < endIndex; i++) {
       endIndex--;
-      if ((v >> i) & 0b1n) { // check bit
+      if ((v >> i) & 0b1) {
+        // check bit
         this.setBit(endIndex);
       } else {
         this.clearBit(endIndex);
@@ -65,10 +85,10 @@ class BitArray {
   }
 
   getBigInt(startIndex, endIndex) {
-    let result = 0n;
-    for (let i = 0n; startIndex < endIndex; i++) {
+    let result = 0;
+    for (let i = 0; startIndex < endIndex; i++) {
       if (this.isBit(--endIndex)) {
-        result |= 1n << i; // set bit
+        result |= 1 << i; // set bit
       }
     }
     return result;
@@ -79,54 +99,72 @@ class BitArray {
   }
 
   getSigned(startIndex, endIndex) {
-    let i, result = 0n;
-    for (i = 0n; startIndex < endIndex; i++) {
+    let i,
+      result = 0;
+    for (i = 0; startIndex < endIndex; i++) {
       if (this.isBit(--endIndex)) {
-        result |= 1n << i; // set bit
+        result |= 1 << i; // set bit
       }
     }
-    let mask = 1n << i - 1n;
-    if (result & mask) { // check first bit
-        result = (mask ^ result) - mask;
+    let mask = 1 << (i - 1);
+    if (result & mask) {
+      // check first bit
+      result = (mask ^ result) - mask;
     }
     return Number(result);
   }
 
   setString(value, startIndex, endIndex, charBits) {
-    for (let i = 0; i < value.length && (charBits = Math.min(charBits, endIndex - startIndex)) > 0; ++i) { // iterate bytes
-      this.set(value.charCodeAt(i), startIndex, startIndex += charBits);
+    for (
+      let i = 0;
+      i < value.length &&
+      (charBits = Math.min(charBits, endIndex - startIndex)) > 0;
+      ++i
+    ) {
+      // iterate bytes
+      this.set(value.charCodeAt(i), startIndex, (startIndex += charBits));
     }
-    for (; startIndex < endIndex; ++startIndex) { // clear remaining bits
+    for (; startIndex < endIndex; ++startIndex) {
+      // clear remaining bits
       this.clearBit(startIndex);
     }
   }
 
   /**
-  * Return string from bit array
-  * @param startIndex offset
-  * @param endIndex last bit
-  * @param charBits how many bits has stored in a byte (max 8 bits)
-  * @return
-  */
+   * Return string from bit array
+   * @param startIndex offset
+   * @param endIndex last bit
+   * @param charBits how many bits has stored in a byte (max 8 bits)
+   * @return
+   */
   getString(startIndex, endIndex, charBits) {
-    let b, result = "";
-    for (let i = 0; (charBits = Math.min(charBits, endIndex - startIndex)) > 0; ++i) { // iterate bytes
-      if(b = this.get(startIndex, startIndex += charBits)) {
+    let b,
+      result = "";
+    for (
+      let i = 0;
+      (charBits = Math.min(charBits, endIndex - startIndex)) > 0;
+      ++i
+    ) {
+      // iterate bytes
+      if ((b = this.get(startIndex, (startIndex += charBits)))) {
         result += String.fromCharCode(b);
       }
     }
     return result;
-  } 
+  }
 
   /**
    * Return a hexadecimal string representation of the bit array.
    * @return hexadecimal base 16
    */
   toHexString() {
-    let b, result = "";
+    let b,
+      result = "";
     for (let i = 0; i < this.length; ++i) {
       b = this.data[i]; // iterate bytes
-      result += BitArray.REVERSE_HEX_CHARS[b & 0xf] + BitArray.REVERSE_HEX_CHARS[(b & 0xf0) >> 4];
+      result +=
+        BitArray.REVERSE_HEX_CHARS[b & 0xf] +
+        BitArray.REVERSE_HEX_CHARS[(b & 0xf0) >> 4];
     }
     return result;
   }
@@ -136,11 +174,12 @@ class BitArray {
    * @return binary base 2
    */
   toBitString() {
-    let b, result = "";
+    let b,
+      result = "";
     for (let i = 0; i < this.length; ++i) {
       b = this.data[i]; // iterate bytes
       for (let j = 0; j < 8; ++j) {
-        result += ((b >>> j) & 0b1) ? "1" : "0";
+        result += (b >>> j) & 0b1 ? "1" : "0";
       }
     }
     return result;
@@ -151,33 +190,36 @@ class BitArray {
     return this;
   }
 
-  setFromHexString(hex) { 
-    if (hex.length & 0b1) { // odd check
-      hex = '0' + hex; // even hex
+  setFromHexString(hex) {
+    if (hex.length & 0b1) {
+      // odd check
+      hex = "0" + hex; // even hex
     }
     this.data = new Array(hex.length >> 1);
     for (let j = 0, i = 0; i < this.length; i++, j += 2) {
-      this.data[i] = BitArray.REVERSE_DEC_TABLE[hex.charCodeAt(j)] | (BitArray.REVERSE_DEC_TABLE[hex.charCodeAt(j+1)] << 4)
+      this.data[i] =
+        BitArray.REVERSE_DEC_TABLE[hex.charCodeAt(j)] |
+        (BitArray.REVERSE_DEC_TABLE[hex.charCodeAt(j + 1)] << 4);
     }
     return this;
   }
 
   not() {
-    let result = new BitArray(this.length << 3);    
-    for(let i = 0; i < result.data.length; ++i) {
-        result.data[i] = ~this.data[i];
+    let result = new BitArray(this.length << 3);
+    for (let i = 0; i < result.data.length; ++i) {
+      result.data[i] = ~this.data[i];
     }
     return result;
   }
 
   or(bitArray) {
     let result;
-    if(bitArray.length > this.length) {
+    if (bitArray.length > this.length) {
       result = new BitArray(bitArray.data.length << 3);
     } else {
       result = new BitArray(this.length << 3);
-    }    
-    for(let i = 0; i < result.data.length; ++i) {
+    }
+    for (let i = 0; i < result.data.length; ++i) {
       result.data[i] = bitArray.data[i] | this.data[i];
     }
     return result;
@@ -185,12 +227,12 @@ class BitArray {
 
   xor(bitArray) {
     let result;
-    if(bitArray.length > this.length) {
+    if (bitArray.length > this.length) {
       result = new BitArray(bitArray.data.length << 3);
     } else {
       result = new BitArray(this.length << 3);
-    }    
-    for(let i = 0; i < result.data.length; ++i) {
+    }
+    for (let i = 0; i < result.data.length; ++i) {
       result.data[i] = bitArray.data[i] ^ this.data[i];
     }
     return result;
@@ -198,17 +240,16 @@ class BitArray {
 
   and(bitArray) {
     let result;
-    if(bitArray.length > this.length) {
+    if (bitArray.length > this.length) {
       result = new BitArray(bitArray.data.length << 3);
     } else {
       result = new BitArray(this.length << 3);
-    }    
-    for(let i = 0; i < result.data.length; ++i) {
+    }
+    for (let i = 0; i < result.data.length; ++i) {
       result.data[i] = bitArray.data[i] & this.data[i];
     }
     return result;
   }
-
 }
 
 module.exports = { BitArray };
